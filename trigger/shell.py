@@ -145,6 +145,14 @@ class Trigger(object):
             message = ('The repository is dirty. Please commit or revert any'
                        ' uncommitted changes.')
             raise TriggerError(message, 161)
+        if not self.conf.config['deploy.allow-local-commits']:
+            local_commits = self._check_for_local_commits()
+            if local_commits:
+                message = ('The repository has local commits that do not exist'
+                           ' in the origin deployment branch. Please push the'
+                           ' commits to the origin or remove them. List of'
+                           ' local commits: {0}')
+                raise TriggerError(message.format(local_commits), 162)
         tag = self._write_tag('sync')
         try:
             # TODO (ryan-lane): Add logging call here
@@ -201,6 +209,23 @@ class Trigger(object):
             return tags[-1]
         else:
             return None
+
+    def _check_for_local_commits(self):
+        """
+        Compare the current branch against the origin deployment branch and
+        return a list of any local commits that don't exist in origin.
+
+        :rtype: list
+        """
+        origin_commits = []
+        local_commits = []
+        origin_branch = self.conf.config['deploy.origin-deploy-branch']
+        for commit in self.conf.repo.iter_commits(origin_branch):
+            origin_commits.append(commit)
+        for commit in self.conf.repo.iter_commits():
+            if commit.hexsha not in origin_commits:
+                local_commits.append(commit.hexsha)
+        return local_commits
 
     @utils.arg('action',
                metavar='<action>',

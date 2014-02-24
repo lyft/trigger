@@ -63,6 +63,14 @@ class Configuration(object):
                 'required': False,
                 'default': None,
             },
+            'deploy.allow-local-commits': {
+                'required': False,
+                'default': True,
+            },
+            'deploy.origin-deploy-branch': {
+                'required': False,
+                'default': 'origin/master',
+            },
             'user.name': {
                 'required': True,
             },
